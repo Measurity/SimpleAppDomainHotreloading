@@ -10,17 +10,6 @@ namespace Hotswapping.ModApi.Marshalling
 {
     public class DomainMediator : MarshalByRefObject
     {
-        public DomainMediator()
-        {
-            AppDomain.CurrentDomain.AssemblyResolve += CurrentDomainOnAssemblyResolve;
-        }
-
-        private Assembly CurrentDomainOnAssemblyResolve(object sender, ResolveEventArgs args)
-        {
-            Debug.WriteLine(args.Name);
-            return Assembly.GetExecutingAssembly();
-        }
-
         public void LoadAssembly(string dllPath)
         {
             Assembly.LoadFrom(Path.GetFullPath(dllPath));
@@ -30,7 +19,12 @@ namespace Hotswapping.ModApi.Marshalling
         {
             return AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes())
                 .Where(t => typeof(IMod).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract && t != typeof(ModMarshallingWrapper))
-                .Select(t => (IMod)Activator.CreateInstance(typeof(ModMarshallingWrapper), Activator.CreateInstance(t))).ToList();
+                .Select(t =>
+                {
+                    var mod = Activator.CreateInstance(t);
+                    var marshaller = (IMod)Activator.CreateInstance(typeof(ModMarshallingWrapper), mod);
+                    return marshaller;
+                }).ToList();
         }
     }
 }
