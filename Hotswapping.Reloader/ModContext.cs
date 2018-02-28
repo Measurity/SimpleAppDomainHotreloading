@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Security.Policy;
-using System.Text;
 using Hotswapping.ModApi;
 using Hotswapping.ModApi.Marshalling;
 
@@ -13,61 +10,54 @@ namespace Hotswapping.Reloader
     public class ModContext : IDisposable
     {
         private AppDomain domain;
-        private DomainMediator proxy;
+        private bool isDisposed;
         private List<IMod> modEntries;
+        private DomainMediator proxy;
 
-        public ICollection<IMod> ModEntries => modEntries == null || !modEntries.Any() ? (modEntries = proxy.GetMods()) : modEntries;
+        private ModContext(string fileName)
+        {
+            if (fileName == null) throw new ArgumentNullException(nameof(fileName));
+            if (!File.Exists(fileName)) throw new FileNotFoundException("Cannot find .dll file for mod.", fileName);
+
+            FileName = fileName;
+            isDisposed = true; // No AppDomain until reload.
+        }
+
+        public ICollection<IMod> ModEntries =>
+            modEntries == null || !modEntries.Any() ? (modEntries = proxy.GetMods()) : modEntries;
 
         public string FileName { get; }
 
-        public ModContext(string fileName)
+        public void Dispose()
         {
-            if (fileName == null)
-            {
-                throw new ArgumentNullException(nameof(fileName));
-            }
-            if (!File.Exists(fileName))
-            {
-                throw new FileNotFoundException("Cannot find .dll file for mod.", fileName);
-            }
+            if (isDisposed) return;
 
-            FileName = fileName;
+            AppDomain.Unload(domain);
+            domain = null;
+            modEntries = null;
+            isDisposed = true;
         }
 
         public static ModContext Create(string modDllPath)
         {
-            ModContext sandbox = new ModContext(modDllPath);
+            var sandbox = new ModContext(modDllPath);
 
             return sandbox;
         }
 
         public void Reload()
         {
-            modEntries = null;
-            if (domain != null)
-            {
-                AppDomain.Unload(domain);
-                domain = null;
-            }
+            Dispose();
 
-            AppDomainSetup setup = new AppDomainSetup();
-            setup.ApplicationBase = Environment.CurrentDirectory;
-            setup.DisallowCodeDownload = true;
-            setup.ConfigurationFile = AppDomain.CurrentDomain.SetupInformation.ConfigurationFile;
-            setup.ShadowCopyFiles = true.ToString().ToLowerInvariant();
-            
-            domain = AppDomain.CreateDomain(Directory.GetParent(FileName).Name, AppDomain.CurrentDomain.Evidence, setup);
+            domain = AppDomain.CreateDomain(Directory.GetParent(FileName).Name, AppDomain.CurrentDomain.Evidence,
+                ModDomainSetup.Default);
+            proxy = (DomainMediator)domain.CreateInstanceAndUnwrap(typeof(DomainMediator).Assembly.FullName,
+                typeof(DomainMediator).FullName);
 
-            proxy =
-                (DomainMediator)domain.CreateInstanceAndUnwrap(typeof(DomainMediator).Assembly.FullName,
-                    typeof(DomainMediator).FullName);
-
+            // Load the mod's assembly using the remote AppDomain
             proxy.LoadAssembly(FileName);
-        }
 
-        public void Dispose()
-        {
-            AppDomain.Unload(domain);
+            isDisposed = false;
         }
     }
 }

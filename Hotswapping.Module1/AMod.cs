@@ -1,12 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Hotswapping.ModApi;
 
 namespace Hotswapping.Module1
 {
-    class AMod : IMod
+    internal class AMod : IMod
     {
         public void Init()
         {

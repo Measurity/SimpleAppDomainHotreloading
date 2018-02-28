@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -18,7 +16,8 @@ namespace Hotswapping.ModApi.Marshalling
         public List<IMod> GetMods()
         {
             return AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes())
-                .Where(t => typeof(IMod).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract && t != typeof(ModMarshallingWrapper))
+                .Where(t => typeof(IMod).IsAssignableFrom(t) && t.IsClass && !t.IsAbstract &&
+                            t != typeof(ModMarshallingWrapper))
                 .Select(t =>
                 {
                     var mod = Activator.CreateInstance(t);

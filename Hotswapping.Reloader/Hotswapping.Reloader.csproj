@@ -38,6 +38,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ModDomainSetup.cs" />
     <Compile Include="ModManager.cs" />
     <Compile Include="ModContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
