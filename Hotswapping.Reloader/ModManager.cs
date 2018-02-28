@@ -31,7 +31,10 @@ namespace Hotswapping.Reloader
 
         public void Reload()
         {
-            foreach (var mod in Mods) mod.Value.Reload();
+            foreach (var mod in Mods)
+            {
+                mod.Value.Reload();
+            }
         }
 
         public IEnumerable<ModContext> GetModModules()

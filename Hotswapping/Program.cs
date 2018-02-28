@@ -24,8 +24,12 @@ namespace Hotswapping
         {
             Console.WriteLine("\tAll modules:");
             foreach (var module in manager.GetModModules())
-            foreach (var mod in module.ModEntries)
-                mod.Init();
+            {
+                foreach (var mod in module.ModEntries)
+                {
+                    mod.Init();
+                }
+            }
         }
     }
 }

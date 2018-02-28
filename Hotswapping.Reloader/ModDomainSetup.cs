@@ -9,7 +9,8 @@ namespace Hotswapping.Reloader
             ApplicationBase = Environment.CurrentDirectory,
             DisallowCodeDownload = true,
             ConfigurationFile = AppDomain.CurrentDomain.SetupInformation.ConfigurationFile,
-            ShadowCopyFiles = true.ToString().ToLowerInvariant()
+            ShadowCopyFiles = true.ToString().ToLowerInvariant(),
+            LoaderOptimization = LoaderOptimization.MultiDomainHost
         };
     }
 }
